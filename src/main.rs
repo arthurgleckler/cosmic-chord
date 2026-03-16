@@ -1,6 +1,8 @@
 /// coschord — COSMIC Launch Or Activate
 ///
-/// Usage: coschord <app_id> [launch_command...]
+/// Usage: coschord [app_id] [launch_command...]
+///
+/// With no arguments, lists the app IDs of all running programs.
 ///
 /// Activates a toplevel whose app_id contains <app_id> (case-insensitive).
 /// If there are multiple matches, cycles through them on repeated
@@ -213,12 +215,6 @@ fn state_path(target: &str) -> std::path::PathBuf {
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    if args.len() < 2 {
-        eprintln!("Usage: coschord <app_id> [launch_command...]");
-        process::exit(2);
-    }
-    let target = args[1].to_lowercase();
-    let launch_cmd = &args[2..];
 
     let conn = match Connection::connect_to_env() {
         Ok(c) => c,
@@ -239,6 +235,24 @@ fn main() {
     conn.display().get_registry(&qh, ());
     eq.roundtrip(&mut state).expect("roundtrip 1");
     eq.roundtrip(&mut state).expect("roundtrip 2");
+
+    // No arguments: list all app IDs and exit.
+    if args.len() < 2 {
+        let mut ids: Vec<&str> = state
+            .toplevels
+            .iter()
+            .filter_map(|w| w.app_id.as_deref())
+            .collect();
+        ids.sort_unstable();
+        ids.dedup();
+        for id in ids {
+            println!("{id}");
+        }
+        return;
+    }
+
+    let target = args[1].to_lowercase();
+    let launch_cmd = &args[2..];
 
     let debug = std::env::var("COSCHORD_DEBUG").is_ok();
     if debug {
