@@ -216,6 +216,19 @@ fn state_path(target: &str) -> std::path::PathBuf {
 fn main() {
     let args: Vec<String> = std::env::args().collect();
 
+    if args.iter().any(|a| a == "--help" || a == "-h") {
+        println!("Usage: coschord [app_id] [launch_command...]");
+        println!();
+        println!("Activates a window whose app ID contains <app_id> (case-insensitive).");
+        println!("If multiple windows match, cycles through them on repeated invocations.");
+        println!("If no match is found, launches the app using the command given on the");
+        println!("command line.  If no command was given, find it in");
+        println!("~/.config/coschord/commands.json.");
+        println!();
+        println!("With no arguments, lists the app IDs of all running programs.");
+        return;
+    }
+
     let conn = match Connection::connect_to_env() {
         Ok(c) => c,
         Err(e) => {
